@@ -1,11 +1,9 @@
-package br.com.yort.downloader;
+package br.com.yort.cnpjcsv2db;
 
 import java.io.BufferedInputStream;
-import java.io.Console;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -21,13 +19,14 @@ public class MultiThreadedDownloader {
     private static long lastTimeMillis = 0L;
     private static Long totalBytes = 0L;
     Timer timer = new Timer();
+    private Progresso progresso = new Progresso();
 
     public MultiThreadedDownloader() {
         bytesDownloaded = 0L;
         startTimeMillis = 0L;
         lastTimeMillis = 0L;
-        totalBytes = 0L;        
-        timer.schedule(new MinhaTarefa(), 0, 100);
+        totalBytes = 0L;
+        timer.schedule(progresso, 0, 100);
     }
 
     public static String repetirCaractere(char caractere, int quantidade) {
@@ -41,12 +40,12 @@ public class MultiThreadedDownloader {
     public boolean multiDownload(List<String> urls, String dirCsv) throws MalformedURLException, IOException {
         totalBytes = 0L;
         for (int i = 0; i < urls.size(); i++) {
-            String urltxt = urls.get(i);            
+            String urltxt = urls.get(i);
             URL url = new URL(urltxt);
             URLConnection conn = url.openConnection();
             int contentLength = conn.getContentLength();
             totalBytes += contentLength;
-            System.out.print(String.format("\033[K\r%-50s %d bytes", urltxt,contentLength));            
+            System.out.print(String.format("\033[K\r%-50s %d bytes", urltxt, contentLength));
         }
         Double speed = totalBytes.doubleValue();
         String s = "bytes";
@@ -61,9 +60,8 @@ public class MultiThreadedDownloader {
         if (speed >= 1024) {
             speed = speed / 1024;
             s = "gb";
-        }        
+        }
         System.out.println(String.format("\033[K\rDonwload Total = %.1f %s" + "\033[K", speed, s, totalBytes));
-        
 
         lastTimeMillis = 0L;
         startTimeMillis = Instant.now().toEpochMilli();
@@ -92,6 +90,9 @@ public class MultiThreadedDownloader {
             }
         }
         timer.cancel();
+        bytesDownloaded = totalBytes;
+        progresso.run();
+        System.out.println();
         return true;
     }
 
@@ -119,7 +120,7 @@ public class MultiThreadedDownloader {
                     while ((bytesRead = in.read(dataBuffer, 0, 16384)) != -1) {
                         synchronized (bytesDownloaded) {
                             bytesDownloaded += bytesRead;
-                        }                        
+                        }
                         fileOutputStream.write(dataBuffer, 0, bytesRead);
                     }
                 } catch (IOException e) {
@@ -135,7 +136,7 @@ public class MultiThreadedDownloader {
 
     }
 
-    public class MinhaTarefa extends TimerTask {
+    public class Progresso extends TimerTask {
 
         @Override
         public void run() {

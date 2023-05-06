@@ -1,4 +1,4 @@
-package br.com.yort.downloader;
+package br.com.yort.cnpjcsv2db;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -6,6 +6,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -31,6 +34,10 @@ public class MultiThreadedUnzip {
 
         //finaliza o pool de threads quando todas as tarefas forem concluídas
         executor.shutdown();
+        try {
+            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+        } catch (InterruptedException ex) {            
+        }
     }
 
     private static void unzipFile(File zipFile, String outputDirectoryPath) throws IOException {
